@@ -1,7 +1,6 @@
 import http from "http";
-import WebSocket from "ws";
+import SocketIO from "socket.io";
 import express from "express";
-import { Socket } from "dgram";
 
 const app = express();
 
@@ -14,30 +13,14 @@ app.get("/*", (_, res) => res.redirect("/"));
 const handleListen = () => console.log(`Listening on http://localhost:3000`);
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
+const io = SocketIO(server);
 
-const sockets = [];
-
-wss.on("connection", (socket) => {
-  sockets.push(socket);
-  socket["nickname"] = "UnknownUser";
-  console.log("Connected to Browser");
-  socket.on("close", () => {
-    console.log("Disconnected from the Browser");
-  });
-  socket.on("message", (msg, isBinary) => {
-    const messageString = isBinary ? msg : msg.toString("utf8");
-    const message = JSON.parse(messageString);
-    switch (message.type) {
-      case "new_message":
-        sockets.forEach((aSocket) =>
-          aSocket.send(`${socket.nickname}: ${message.payload}`)
-        );
-        break;
-      case "nickname":
-        socket["nickname"] = message.payload;
-        break;
-    }
+io.on("connection", (socket) => {
+  socket.on("enter_room", (rommName, done) => {
+    console.log(rommName);
+    setTimeout(() => {
+      done("hello");
+    }, 5000);
   });
 });
 
