@@ -20,13 +20,24 @@ const sockets = [];
 
 wss.on("connection", (socket) => {
   sockets.push(socket);
+  socket["nickname"] = "UnknownUser";
   console.log("Connected to Browser");
   socket.on("close", () => {
     console.log("Disconnected from the Browser");
   });
-  socket.on("message", (message, isBinary) => {
-    const messageString = isBinary ? message : message.toString("utf8");
-    sockets.forEach((aSocket) => aSocket.send(messageString));
+  socket.on("message", (msg, isBinary) => {
+    const messageString = isBinary ? msg : msg.toString("utf8");
+    const message = JSON.parse(messageString);
+    switch (message.type) {
+      case "new_message":
+        sockets.forEach((aSocket) =>
+          aSocket.send(`${socket.nickname}: ${message.payload}`)
+        );
+        break;
+      case "nickname":
+        socket["nickname"] = message.payload;
+        break;
+    }
   });
 });
 
