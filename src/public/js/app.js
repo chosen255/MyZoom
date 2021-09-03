@@ -27,7 +27,7 @@ function handleMessageSubmit(event) {
 
 function handleNicknameSubmit(event) {
   event.preventDefault();
-  const input = room.querySelector("#name input");
+  const input = room.querySelector("#nickNameForm input");
   socket.emit("nickname", input.value);
 }
 
@@ -37,27 +37,47 @@ function showRoom() {
   const h3 = room.querySelector("h3");
   h3.innerText = `Room ${roomName}`;
   const msgForm = room.querySelector("#msg");
-  const nameForm = room.querySelector("#name");
+  const nameForm = room.querySelector("#nickNameForm");
   msgForm.addEventListener("submit", handleMessageSubmit);
   nameForm.addEventListener("submit", handleNicknameSubmit);
 }
 
 function handleRoomSubmit(event) {
   event.preventDefault();
-  const input = form.querySelector("input");
-  socket.emit("enter_room", input.value, showRoom);
-  roomName = input.value;
-  input.value = "";
+  const roomNameInput = form.querySelector("#roomName");
+  const nickNameInput = form.querySelector("#nickName");
+  socket.emit("enter_room", roomNameInput.value, nickNameInput.value, showRoom);
+  roomName = roomNameInput.value;
+  roomNameInput.value = "";
+  const nickNameChangeInput = room.querySelector("#nickNameForm input");
+  nickNameChangeInput.value = nickNameInput.value;
 }
 
 form.addEventListener("submit", handleRoomSubmit);
 
-socket.on("welcom", (user) => {
+socket.on("welcom", (user, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${user} join the room`);
 });
 
-socket.on("bye", (left) => {
+socket.on("bye", (left, newCount) => {
+  const h3 = room.querySelector("h3");
+  h3.innerText = `Room ${roomName} (${newCount})`;
   addMessage(`${left} left`);
 });
 
 socket.on("message", addMessage);
+
+socket.on("room_change", (rooms) => {
+  const roomList = welcome.querySelector("ul");
+  roomList.innerHTML = "";
+  if (rooms.length === 0) {
+    return;
+  }
+  rooms.forEach((room) => {
+    const li = document.createElement("li");
+    li.innerText = room;
+    roomList.append(li);
+  });
+});
